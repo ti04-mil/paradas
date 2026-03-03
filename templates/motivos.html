@@ -55,6 +55,20 @@
             justify-content: flex-end;
         }
 
+        .filter-card {
+            border: 1px solid #cdd3db;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 14px;
+            background-color: #f1f3f7;
+        }
+
+        .results-info {
+            font-size: 0.95rem;
+            color: #4b5563;
+            margin-top: 8px;
+        }
+
         @media (max-width: 768px) {
             .title-text {
                 font-size: 1.5rem;
@@ -62,6 +76,63 @@
 
             .action-group {
                 justify-content: flex-start;
+            }
+
+            .filter-card {
+                padding: 10px;
+            }
+
+            .table {
+                font-size: 1rem;
+            }
+
+            .table thead {
+                display: none;
+            }
+
+            .table tbody tr {
+                display: block;
+                border: 1px solid #cdd3db;
+                border-radius: 8px;
+                padding: 10px;
+                margin-bottom: 10px;
+                background: #eef0f4;
+            }
+
+            .table tbody td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border: 0;
+                padding: 6px 0;
+                text-align: right;
+                gap: 12px;
+            }
+
+            .table tbody td::before {
+                content: attr(data-label);
+                font-weight: 700;
+                color: #1f2937;
+                text-align: left;
+            }
+
+            .table tbody td:last-child {
+                display: block;
+                padding-top: 10px;
+            }
+
+            .table tbody td:last-child::before {
+                display: block;
+                margin-bottom: 8px;
+            }
+
+            .action-group {
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+
+            .action-btn {
+                min-width: 112px;
             }
         }
     </style>
@@ -89,8 +160,14 @@
         </section>
 
         <section>
+            <div class="filter-card">
+                <label for="descricaoFilter" class="form-label fw-semibold mb-1">Filtrar por descrição</label>
+                <input id="descricaoFilter" type="text" class="form-control" placeholder="Digite parte da descrição" autocomplete="off" />
+                <div id="resultsInfo" class="results-info" aria-live="polite"></div>
+            </div>
+
             <div class="table-responsive">
-                <table class="table table-bordered align-middle">
+                <table class="table table-bordered align-middle" id="motivosTable">
                     <thead>
                         <tr>
                             <th style="width: 180px;">Código</th>
@@ -100,10 +177,10 @@
                     </thead>
                     <tbody>
                         {% for motivo in motivos %}
-                            <tr>
-                                <td>{{ motivo['codigo'] }}</td>
-                                <td>{{ motivo['descricao'] }}</td>
-                                <td>
+                            <tr data-descricao="{{ motivo['descricao'] | lower }}">
+                                <td data-label="Código">{{ motivo['codigo'] }}</td>
+                                <td data-label="Descrição">{{ motivo['descricao'] }}</td>
+                                <td data-label="Ações">
                                     <div class="action-group">
                                         <a href="{{ url_for('editar_motivo_form', codigo=motivo['codigo']) }}" class="btn btn-outline-primary action-btn">Editar</a>
                                         <form method="post" action="{{ url_for('excluir_motivo', codigo=motivo['codigo']) }}" onsubmit="return confirm('Deseja excluir este motivo?');">
@@ -118,5 +195,40 @@
             </div>
         </section>
     </main>
+
+    <script>
+        const descricaoFilterInput = document.getElementById('descricaoFilter');
+        const resultsInfo = document.getElementById('resultsInfo');
+        const tableRows = Array.from(document.querySelectorAll('#motivosTable tbody tr'));
+
+        function updateResultsInfo(visibleCount, totalCount, filterValue) {
+            if (!filterValue) {
+                resultsInfo.textContent = `Exibindo ${totalCount} motivo(s).`;
+                return;
+            }
+
+            resultsInfo.textContent = `Exibindo ${visibleCount} de ${totalCount} motivo(s) para "${filterValue}".`;
+        }
+
+        function applyDescricaoFilter() {
+            const normalizedFilter = descricaoFilterInput.value.trim().toLowerCase();
+            let visibleRows = 0;
+
+            tableRows.forEach((row) => {
+                const descricao = row.dataset.descricao || '';
+                const shouldShow = descricao.includes(normalizedFilter);
+                row.style.display = shouldShow ? '' : 'none';
+
+                if (shouldShow) {
+                    visibleRows += 1;
+                }
+            });
+
+            updateResultsInfo(visibleRows, tableRows.length, descricaoFilterInput.value.trim());
+        }
+
+        descricaoFilterInput.addEventListener('input', applyDescricaoFilter);
+        applyDescricaoFilter();
+    </script>
 </body>
 </html>
