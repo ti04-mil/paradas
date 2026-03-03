@@ -18,7 +18,7 @@ elif DEFAULT_NETWORK_DB_PATH.exists():
 else:
     DB_PATH = BASE_DIR / "Paradas.db"
 
-app = Flask(__name__, static_folder="Imagens", static_url_path="/Imagens")
+app = Flask(__name__, static_folder="static", static_url_path="/static")
 app.config["SECRET_KEY"] = "paradas-secret-key-change-me"
 
 AUTO_SYNC_LOCK = threading.Lock()
