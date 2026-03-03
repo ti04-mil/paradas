@@ -20,6 +20,12 @@ else:
 
 app = Flask(__name__, static_folder="static", static_url_path="/static")
 app.config["SECRET_KEY"] = "paradas-secret-key-change-me"
+app.config["SHOW_DEFAULT_LOGIN_HINT"] = os.getenv("PARADAS_SHOW_DEFAULT_LOGIN_HINT", "").strip().lower() in {
+    "1",
+    "true",
+    "yes",
+    "on",
+}
 
 AUTO_SYNC_LOCK = threading.Lock()
 AUTO_SYNC_LAST_EXEC = set()
@@ -1414,21 +1420,39 @@ def home():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    form_values = {"login": ""}
+    form_errors = {}
+
     if request.method == "POST":
         login_value = request.form.get("login", "").strip()
         senha = request.form.get("senha", "")
-        user = get_user_by_login(login_value)
+        form_values["login"] = login_value
 
-        if user and check_password_hash(user["senha"], senha):
+        if not login_value:
+            form_errors["login"] = "Informe o usuário."
+        if not senha:
+            form_errors["senha"] = "Informe a senha."
+
+        user = get_user_by_login(login_value) if login_value else None
+
+        if not form_errors and user is None:
+            form_errors["login"] = "Usuário não encontrado."
+        if not form_errors and user and not check_password_hash(user["senha"], senha):
+            form_errors["senha"] = "Senha inválida."
+
+        if not form_errors and user:
             session["user_id"] = user["id"]
             session["login"] = user["login"]
             session["nivel"] = user["nivel"]
             flash("Login realizado.")
             return redirect(url_for("sistema"))
 
-        flash("Usuario ou senha invalidos.")
-
-    return render_template("login.html")
+    return render_template(
+        "login.html",
+        form_values=form_values,
+        form_errors=form_errors,
+        show_default_login_hint=app.config["SHOW_DEFAULT_LOGIN_HINT"],
+    )
 
 
 @app.get("/sistema")
@@ -2924,4 +2948,3 @@ if __name__ == "__main__":
     if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
         start_auto_sync_scheduler()
     app.run(host="127.0.0.1", port=int(os.getenv("PORT", "5000")), debug=True)
-
