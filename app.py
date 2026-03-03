@@ -180,6 +180,13 @@ TURNOS_CANONICOS = {
 def canonical_turno_nome(value: str) -> str:
     return TURNOS_CANONICOS.get(normalize_turno_nome(value), (value or "").strip())
 
+
+
+def interval_matches_turno(interval_turno: str, turno_filtro: str) -> bool:
+    if turno_filtro == "TODOS":
+        return True
+    return canonical_turno_nome(interval_turno) == turno_filtro
+
 def get_connection() -> sqlite3.Connection:
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -2768,6 +2775,193 @@ def descanso_semanal():
         hora_ate="22:30",
         data_min=sabado.strftime("%Y-%m-%d"),
         data_max=domingo.strftime("%Y-%m-%d"),
+    )
+
+
+@app.get("/relatorio-geral")
+def relatorio_geral():
+    user = get_current_user()
+    if user is None:
+        flash("Faca login para acessar o sistema.")
+        return redirect(url_for("login"))
+
+    hoje = datetime.now().date()
+    data_fim_iso = request.args.get("data_fim", "").strip()
+    try:
+        data_fim = datetime.strptime(data_fim_iso, "%Y-%m-%d").date() if data_fim_iso else hoje
+    except ValueError:
+        data_fim = hoje
+    data_inicio = data_fim - timedelta(days=6)
+
+    estado = request.args.get("estado", "funcionando").strip().lower()
+    if estado not in {"funcionando", "parado"}:
+        estado = "funcionando"
+
+    with get_connection() as conn:
+        turnos_rows = conn.execute("SELECT nome FROM turnos ORDER BY id ASC").fetchall()
+        teares_rows = conn.execute("SELECT id, nome, numero FROM teares ORDER BY numero ASC").fetchall()
+        eventos_rows = conn.execute(
+            """
+            SELECT id, tipo, tear_id, hora, data, turno
+            FROM status_teares
+            ORDER BY tear_id ASC, id ASC
+            """
+        ).fetchall()
+
+    turnos_disponiveis = [canonical_turno_nome(row["nome"]) for row in turnos_rows]
+    turno_filtro = canonical_turno_nome(request.args.get("turno", "TODOS"))
+    if turno_filtro != "TODOS" and turno_filtro not in turnos_disponiveis:
+        turno_filtro = "TODOS"
+
+    teares_ids_raw = request.args.getlist("tear_ids")
+    teares_ids_param = [x for x in teares_ids_raw if x.isdigit()]
+    teares_ids_filtro = {int(x) for x in teares_ids_param}
+
+    teares = []
+    for tear in teares_rows:
+        tear_id = int(tear["id"])
+        label = f"{tear['nome'].title()} {tear['numero']}"
+        teares.append({"id": tear_id, "label": label})
+
+    eventos_por_tear: dict[int, list[dict]] = {}
+    for row in eventos_rows:
+        tear_id = int(row["tear_id"])
+        dt = parse_status_datetime(row["data"], row["hora"])
+        if dt is None:
+            continue
+        eventos_por_tear.setdefault(tear_id, []).append(
+            {
+                "dt": dt,
+                "tipo": int(row["tipo"]),
+                "turno": row["turno"] or "",
+            }
+        )
+
+    def teve_parada_no_dia(eventos: list[dict], dia_ref) -> bool:
+        dia_inicio = datetime.combine(dia_ref, datetime.min.time())
+        dia_fim = dia_inicio + timedelta(days=1)
+        estado_atual = 1
+        idx = 0
+        while idx < len(eventos) and eventos[idx]["dt"] <= dia_inicio:
+            estado_atual = eventos[idx]["tipo"]
+            idx += 1
+
+        cursor = dia_inicio
+        while idx < len(eventos) and eventos[idx]["dt"] < dia_fim:
+            ev = eventos[idx]
+            if estado_atual == 0 and ev["dt"] > cursor:
+                return True
+            cursor = max(cursor, ev["dt"])
+            estado_atual = ev["tipo"]
+            idx += 1
+
+        return bool(estado_atual == 0 and dia_fim > cursor)
+
+    if not teares_ids_raw:
+        teares_ids_filtro = {
+            tear["id"]
+            for tear in teares
+            if teve_parada_no_dia(eventos_por_tear.get(tear["id"], []), data_fim)
+        }
+
+    dias = [data_inicio + timedelta(days=offset) for offset in range(7)]
+    day_labels = [day.strftime("%d/%m") for day in dias]
+    estado_tipo = 1 if estado == "funcionando" else 0
+
+    resultados: list[dict] = []
+    totais_por_dia = [0] * len(dias)
+
+    for tear in teares:
+        if tear["id"] not in teares_ids_filtro:
+            continue
+
+        eventos = eventos_por_tear.get(tear["id"], [])
+        minutos_por_dia: list[int] = []
+        for day in dias:
+            day_start = datetime.combine(day, datetime.min.time())
+            day_end = day_start + timedelta(days=1)
+
+            estado_atual = 1
+            turno_atual = ""
+            idx = 0
+            while idx < len(eventos) and eventos[idx]["dt"] <= day_start:
+                estado_atual = eventos[idx]["tipo"]
+                turno_atual = eventos[idx]["turno"]
+                idx += 1
+
+            cursor = day_start
+            minutos_estado = 0
+
+            while idx < len(eventos) and eventos[idx]["dt"] < day_end:
+                ev = eventos[idx]
+                if ev["dt"] > cursor and estado_atual == estado_tipo and interval_matches_turno(turno_atual, turno_filtro):
+                    minutos_estado += int((ev["dt"] - cursor).total_seconds() // 60)
+                cursor = max(cursor, ev["dt"])
+                estado_atual = ev["tipo"]
+                turno_atual = ev["turno"]
+                idx += 1
+
+            if day_end > cursor and estado_atual == estado_tipo and interval_matches_turno(turno_atual, turno_filtro):
+                minutos_estado += int((day_end - cursor).total_seconds() // 60)
+
+            minutos_por_dia.append(max(minutos_estado, 0))
+
+        total_tear = sum(minutos_por_dia)
+        for i, mins in enumerate(minutos_por_dia):
+            totais_por_dia[i] += mins
+
+        resultados.append(
+            {
+                "tear_id": tear["id"],
+                "tear": tear["label"],
+                "minutos_por_dia": minutos_por_dia,
+                "total_minutos": total_tear,
+            }
+        )
+
+    max_minutos = max([0] + [mins for r in resultados for mins in r["minutos_por_dia"]])
+
+    def fmt(mins: int) -> str:
+        h = mins // 60
+        m = mins % 60
+        return f"{h:02d}h {m:02d}"
+
+    heatmap_rows = []
+    for row in resultados:
+        celulas = []
+        for mins in row["minutos_por_dia"]:
+            ratio = (mins / max_minutos) if max_minutos else 0
+            if mins <= 0:
+                color = "#f1f3f5"
+                text = "#475467"
+            elif estado == "parado":
+                tone = 95 - int(ratio * 48)
+                color = f"hsl(0 88% {tone}%)"
+                text = "#111"
+            else:
+                tone = 95 - int(ratio * 48)
+                color = f"hsl(127 82% {tone}%)"
+                text = "#111"
+            celulas.append({"minutos": mins, "valor": fmt(mins), "bg": color, "text": text})
+        heatmap_rows.append({"tear": row["tear"], "celulas": celulas})
+
+    total_geral = sum(totais_por_dia)
+
+    return render_template(
+        "relatorio_geral.html",
+        data_inicio=data_inicio.strftime("%Y-%m-%d"),
+        data_fim=data_fim.strftime("%Y-%m-%d"),
+        estado=estado,
+        turno_filtro=turno_filtro,
+        turnos_disponiveis=turnos_disponiveis,
+        teares=teares,
+        teares_ids_filtro=teares_ids_filtro,
+        resultados=resultados,
+        day_labels=day_labels,
+        totais_por_dia=totais_por_dia,
+        total_geral=total_geral,
+        fmt=fmt,
+        heatmap_rows=heatmap_rows,
     )
 
 
