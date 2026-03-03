@@ -1,0 +1,182 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Setores - Sistema de Paradas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+        body {
+            background-color: #e6e7eb;
+        }
+
+        .header-logo {
+            background: #1f2630;
+            min-height: 110px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            margin-bottom: 22px;
+        }
+
+        .header-logo img {
+            max-width: 100%;
+            max-height: 78px;
+            height: auto;
+            display: block;
+        }
+
+        .title-bar {
+            background-color: #0f4d75;
+            color: #fff;
+            border-radius: 6px;
+            padding: 16px;
+            margin-bottom: 18px;
+        }
+
+        .title-text {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .table-wrap {
+            background: transparent;
+        }
+
+        .table > :not(caption) > * > * {
+            background-color: #e6e7eb;
+        }
+
+        .action-btn {
+            min-width: 82px;
+        }
+
+        .action-group {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        @media (max-width: 768px) {
+            .title-text {
+                font-size: 1.5rem;
+            }
+
+            .action-group {
+                justify-content: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header-logo">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Sistemas de Parada dos Teares" />
+    </header>
+
+    <main class="container-fluid px-3 px-md-4 pb-4">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-success" role="alert">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <section class="title-bar d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+            <h1 class="title-text">SETORES</h1>
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('sistema') }}" class="btn btn-outline-light btn-lg">VOLTAR</a>
+                <button type="button" class="btn btn-light btn-lg" data-bs-toggle="modal" data-bs-target="#modalAdicionar">ADICIONAR</button>
+            </div>
+        </section>
+
+        <section class="table-wrap">
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle">
+                    <thead>
+                        <tr>
+                            <th style="width: 80px;">ID</th>
+                            <th>Nome</th>
+                            <th style="width: 120px;">Nível</th>
+                            <th style="width: 190px;" class="text-end">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for setor in setores %}
+                            <tr>
+                                <td>{{ setor['id'] }}</td>
+                                <td>{{ setor['nome'] }}</td>
+                                <td>{{ setor['nivel'] }}</td>
+                                <td>
+                                    <div class="action-group">
+                                        <button class="btn btn-outline-primary action-btn" data-bs-toggle="modal" data-bs-target="#modalEditar{{ setor['id'] }}">Editar</button>
+                                        <form method="post" action="{{ url_for('excluir_setor', setor_id=setor['id']) }}" onsubmit="return confirm('Deseja excluir este setor?');">
+                                            <button type="submit" class="btn btn-outline-danger action-btn">Excluir</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <div class="modal fade" id="modalAdicionar" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <form method="post" action="{{ url_for('adicionar_setor') }}" class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Adicionar Setor</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label" for="add_nome">Nome</label>
+                        <input id="add_nome" name="nome" class="form-control" required />
+                    </div>
+                    <div>
+                        <label class="form-label" for="add_nivel">Nível</label>
+                        <input id="add_nivel" name="nivel" type="number" min="1" class="form-control" required />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% for setor in setores %}
+        <div class="modal fade" id="modalEditar{{ setor['id'] }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <form method="post" action="{{ url_for('editar_setor', setor_id=setor['id']) }}" class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Editar Setor</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label" for="nome_{{ setor['id'] }}">Nome</label>
+                            <input id="nome_{{ setor['id'] }}" name="nome" class="form-control" value="{{ setor['nome'] }}" required />
+                        </div>
+                        <div>
+                            <label class="form-label" for="nivel_{{ setor['id'] }}">Nível</label>
+                            <input id="nivel_{{ setor['id'] }}" name="nivel" type="number" min="1" class="form-control" value="{{ setor['nivel'] }}" required />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    {% endfor %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

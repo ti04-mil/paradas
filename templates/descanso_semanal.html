@@ -1,0 +1,169 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Descanso Semanal - Sistema de Paradas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+        body { background-color: #e6e7eb; }
+        .header-logo {
+            background: #1f2630;
+            min-height: 110px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            margin-bottom: 22px;
+        }
+        .header-logo img {
+            max-width: 100%;
+            max-height: 78px;
+            height: auto;
+            display: block;
+        }
+        .panel {
+            background: #0f4d75;
+            color: #fff;
+            border-radius: 6px;
+            padding: 16px;
+            margin-bottom: 18px;
+        }
+        .box {
+            background: #fff;
+            border: 1px solid #d4dbe5;
+            border-radius: 8px;
+            padding: 16px;
+        }
+        .tear-list {
+            max-height: 380px;
+            overflow: auto;
+            border: 1px solid #d4dbe5;
+            border-radius: 6px;
+            background: #fff;
+            padding: 10px;
+        }
+        .teares-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 10px;
+        }
+        .tear-toggle {
+            border: 2px solid #b9c3d1;
+            border-radius: 10px;
+            background: #eef2f7;
+            color: #1f2b3b;
+            min-height: 52px;
+            font-weight: 700;
+            width: 100%;
+            transition: all 0.15s ease;
+        }
+        .tear-toggle.is-selected-stop {
+            border-color: #dc3545;
+            background: #f8d7da;
+            color: #842029;
+        }
+        .tear-toggle.is-selected-start {
+            border-color: #198754;
+            background: #d1e7dd;
+            color: #0f5132;
+        }
+        .tear-help {
+            font-size: 0.9rem;
+            color: #4b5b70;
+        }
+    </style>
+</head>
+<body>
+    <header class="header-logo">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Sistemas de Parada dos Teares" />
+    </header>
+
+    <main class="container-fluid px-3 px-md-4 pb-4">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-success" role="alert">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <section class="panel d-flex justify-content-between align-items-center">
+            <h1 class="m-0">Descanso Semanal</h1>
+            <a href="{{ url_for('status_teares') }}" class="btn btn-outline-light btn-lg">Voltar</a>
+        </section>
+
+        <section class="box">
+            <form method="post" id="formDescanso">
+                <div class="row g-3 mb-3">
+                    <div class="col-12 col-md-3">
+                        <label class="form-label" for="data_de">Dia de</label>
+                        <input id="data_de" name="data_de" type="date" class="form-control" value="{{ data_de }}" min="{{ data_min }}" max="{{ data_max }}" required />
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <label class="form-label" for="hora_de">Hora de</label>
+                        <input id="hora_de" name="hora_de" type="time" class="form-control" value="{{ hora_de }}" required />
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <label class="form-label" for="data_ate">Dia até</label>
+                        <input id="data_ate" name="data_ate" type="date" class="form-control" value="{{ data_ate }}" min="{{ data_min }}" max="{{ data_max }}" required />
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <label class="form-label" for="hora_ate">Hora até</label>
+                        <input id="hora_ate" name="hora_ate" type="time" class="form-control" value="{{ hora_ate }}" required />
+                    </div>
+                </div>
+
+                <label class="form-label">Selecione os teares (vermelho para parar, verde para ligar)</label>
+                <div class="tear-list mb-3">
+                    <div class="teares-grid">
+                        {% for tear in teares %}
+                            <button
+                                type="button"
+                                class="tear-toggle {% if tear['parado_por_descanso'] %}is-selected-start{% endif %}"
+                                data-tear-id="{{ tear['id'] }}"
+                                data-mode="{% if tear['parado_por_descanso'] %}start{% else %}stop{% endif %}"
+                            >
+                                {{ tear['label'] }}
+                            </button>
+                            <input type="checkbox" class="d-none tear-input-stop" name="tear_ids_parar" value="{{ tear['id'] }}" data-tear-stop="{{ tear['id'] }}" />
+                            <input type="checkbox" class="d-none tear-input-start" name="tear_ids_ativar" value="{{ tear['id'] }}" data-tear-start="{{ tear['id'] }}" {% if tear['parado_por_descanso'] %}checked{% endif %} />
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="tear-help mb-3">Teares já parados por descanso começam em verde (prontos para ligar).</div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" formaction="{{ url_for('descanso_desativar') }}" class="btn btn-danger">Desativar (parar)</button>
+                    <button type="submit" formaction="{{ url_for('descanso_ativar') }}" class="btn btn-success">Ativar</button>
+                </div>
+            </form>
+        </section>
+    </main>
+    <script>
+        const tearButtons = document.querySelectorAll('.tear-toggle');
+        tearButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+                const tearId = button.dataset.tearId;
+                const stopInput = document.querySelector(`[data-tear-stop="${tearId}"]`);
+                const startInput = document.querySelector(`[data-tear-start="${tearId}"]`);
+                const currentMode = button.dataset.mode;
+
+                if (currentMode === 'start') {
+                    const willSelect = !startInput.checked;
+                    startInput.checked = willSelect;
+                    stopInput.checked = false;
+                    button.classList.toggle('is-selected-start', willSelect);
+                    button.classList.remove('is-selected-stop');
+                } else {
+                    const willSelect = !stopInput.checked;
+                    stopInput.checked = willSelect;
+                    startInput.checked = false;
+                    button.classList.toggle('is-selected-stop', willSelect);
+                    button.classList.remove('is-selected-start');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

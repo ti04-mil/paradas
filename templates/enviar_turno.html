@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ turno_titulo }} - Sistema de Paradas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+        body {
+            background-color: #e6e7eb;
+            color: #1b2430;
+        }
+
+        .top-header {
+            background: #1f2630;
+            min-height: 110px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+
+        .top-header img {
+            max-width: 100%;
+            max-height: 78px;
+            height: auto;
+            display: block;
+        }
+
+        .table-wrap {
+            border: 1px solid #a8afb8;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table thead th {
+            background: #25384a;
+            color: #ffffff;
+            font-weight: 700;
+            border-color: #223343;
+            white-space: nowrap;
+        }
+
+        .table tbody tr:nth-child(odd) td {
+            background-color: #c9ced6;
+        }
+
+        .table tbody tr:nth-child(even) td {
+            background-color: #dde2e8;
+        }
+
+        .table tbody td {
+            border-color: #b8bec7;
+        }
+    </style>
+</head>
+<body>
+    <header class="top-header">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Sistemas de Parada dos Teares" />
+    </header>
+
+    <main class="container-fluid px-3 px-md-4 pb-4">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-success" role="alert">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <h1 class="mb-3">
+            {% if is_auto_mode %}
+                {{ turno_titulo }}
+            {% else %}
+                {{ turno_titulo }} ({{ faixa_horario[:2] }}h:{{ faixa_horario[3:5] }}min - {{ faixa_horario[8:10] }}h:{{ faixa_horario[11:13] }}min)
+            {% endif %}
+        </h1>
+
+        <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+            <form method="get" action="{{ url_for(endpoint_name) }}" class="d-flex gap-2">
+                <input type="date" name="data" value="{{ data_ref }}" class="form-control" style="max-width: 220px;" required />
+                {% if not is_auto_mode %}
+                    <input type="hidden" name="atualizar" value="1" />
+                    <button type="submit" class="btn btn-warning btn-lg">Atualizar {{ turno_nivel }}º turno</button>
+                {% else %}
+                    <button type="submit" class="btn btn-secondary btn-lg">Consultar</button>
+                {% endif %}
+            </form>
+
+            {% if is_auto_mode %}
+                <form method="post" action="{{ url_for('enviar_manual') }}" class="d-inline">
+                    <input type="hidden" name="data" value="{{ data_ref }}" />
+                    <button type="submit" class="btn btn-warning btn-lg">Enviar</button>
+                </form>
+            {% endif %}
+
+            <a href="{{ url_for('status_teares') }}" class="btn btn-primary btn-lg">Ir para Paradas</a>
+            <a href="{{ url_for('sistema') }}" class="btn btn-outline-secondary btn-lg">Voltar</a>
+        </div>
+
+        <p class="text-muted mb-3">
+            {% if is_auto_mode %}
+                Consulta da tabela <strong>producao1_001</strong> com dados gerados automaticamente nos fechamentos de turno.
+            {% else %}
+                Busca na tabela <strong>producao1_001</strong> para o turno selecionado no dia informado.
+            {% endif %}
+        </p>
+
+        <div class="table-responsive table-wrap">
+            <table class="table table-bordered align-middle">
+                <thead>
+                    <tr>
+                        <th>Data Parada</th>
+                        <th>Código Funcionário</th>
+                        <th>Nome do Funcionário</th>
+                        <th>Tear</th>
+                        <th>Motivo</th>
+                        <th>Descrição do Motivo</th>
+                        <th>Hora Inicial</th>
+                        <th>Hora Final</th>
+                        <th>Tempo Parado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if rows %}
+                        {% for row in rows %}
+                            <tr>
+                                <td>{{ row['data_emi'] or '' }}</td>
+                                <td>{{ row['funcionario'] or '' }}</td>
+                                <td>{{ row['funcionario_nome'] or '' }}</td>
+                                <td>{{ row['operacao'] or '' }}</td>
+                                <td>{{ row['numero'] or '' }}</td>
+                                <td>{{ row['motivo_descricao'] or '' }}</td>
+                                <td>{% if row['hora_ini'] %}{{ row['hora_ini'][:2] }}h:{{ row['hora_ini'][3:5] }}min{% endif %}</td>
+                                <td>{% if row['hora_fim'] %}{{ row['hora_fim'][:2] }}h:{{ row['hora_fim'][3:5] }}min{% endif %}</td>
+                                <td>{{ row.get('pcfim_display', '') }}</td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="9" class="text-center text-muted">Nenhum registro para a data selecionada.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </main>
+</body>
+</html>

@@ -1,0 +1,222 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Turnos - Sistema de Paradas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+        body {
+            background-color: #e6e7eb;
+        }
+
+        .header-logo {
+            background: #1f2630;
+            min-height: 110px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            margin-bottom: 22px;
+        }
+
+        .header-logo img {
+            max-width: 100%;
+            max-height: 78px;
+            height: auto;
+            display: block;
+        }
+
+        .title-bar {
+            background-color: #0f4d75;
+            color: #fff;
+            border-radius: 6px;
+            padding: 16px;
+            margin-bottom: 18px;
+        }
+
+        .title-text {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .table > :not(caption) > * > * {
+            background-color: #e6e7eb;
+        }
+
+        .action-btn {
+            min-width: 82px;
+        }
+
+        .action-group {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        @media (max-width: 768px) {
+            .title-text {
+                font-size: 1.5rem;
+            }
+
+            .action-group {
+                justify-content: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header-logo">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Sistemas de Parada dos Teares" />
+    </header>
+
+    <main class="container-fluid px-3 px-md-4 pb-4">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-success" role="alert">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <section class="title-bar d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+            <h1 class="title-text">TURNOS</h1>
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('sistema') }}" class="btn btn-outline-light btn-lg">VOLTAR</a>
+                <button type="button" class="btn btn-light btn-lg" data-bs-toggle="modal" data-bs-target="#modalAdicionar">ADICIONAR</button>
+            </div>
+        </section>
+
+        <section>
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle">
+                    <thead>
+                        <tr>
+                            <th style="width: 80px;">ID</th>
+                            <th>Tipo</th>
+                            <th>Dia</th>
+                            <th style="width: 140px;">Inicio</th>
+                            <th style="width: 140px;">Fim</th>
+                            <th style="width: 140px;">Total</th>
+                            <th style="width: 190px;" class="text-end">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for registro in turnos_empresa %}
+                            <tr>
+                                <td>{{ registro['id'] }}</td>
+                                <td>{{ registro['tipo_nome'] }}</td>
+                                <td>{{ registro['dia'] }}</td>
+                                <td>{{ registro['inicio'] }}</td>
+                                <td>{{ registro['fim'] }}</td>
+                                <td>{{ registro['total'] }}</td>
+                                <td>
+                                    <div class="action-group">
+                                        <button class="btn btn-outline-primary action-btn" data-bs-toggle="modal" data-bs-target="#modalEditar{{ registro['id'] }}">Editar</button>
+                                        <form method="post" action="{{ url_for('excluir_turno_empresa', registro_id=registro['id']) }}" onsubmit="return confirm('Deseja excluir este registro?');">
+                                            <button type="submit" class="btn btn-outline-danger action-btn">Excluir</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <div class="modal fade" id="modalAdicionar" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <form method="post" action="{{ url_for('adicionar_turno_empresa') }}" class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Adicionar Turno</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label" for="add_tipo_turno_id">Tipo</label>
+                        <select id="add_tipo_turno_id" name="tipo_turno_id" class="form-select" required>
+                            <option value="">-- selecione --</option>
+                            {% for tipo in tipos_turno %}
+                                <option value="{{ tipo['id'] }}">{{ tipo['nome'] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="add_dia">Dia</label>
+                        <select id="add_dia" name="dia" class="form-select" required>
+                            <option value="">-- selecione --</option>
+                            {% for dia in dias_semana %}
+                                <option value="{{ dia }}">{{ dia }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="form-label" for="add_inicio">Inicio</label>
+                            <input id="add_inicio" name="inicio" type="time" class="form-control" required />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label" for="add_fim">Fim</label>
+                            <input id="add_fim" name="fim" type="time" class="form-control" required />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% for registro in turnos_empresa %}
+        <div class="modal fade" id="modalEditar{{ registro['id'] }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <form method="post" action="{{ url_for('editar_turno_empresa', registro_id=registro['id']) }}" class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Editar Turno</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label" for="tipo_{{ registro['id'] }}">Tipo</label>
+                            <select id="tipo_{{ registro['id'] }}" name="tipo_turno_id" class="form-select" required>
+                                {% for tipo in tipos_turno %}
+                                    <option value="{{ tipo['id'] }}" {% if tipo['id'] == registro['tipo_turno_id'] %}selected{% endif %}>{{ tipo['nome'] }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="dia_{{ registro['id'] }}">Dia</label>
+                            <select id="dia_{{ registro['id'] }}" name="dia" class="form-select" required>
+                                {% for dia in dias_semana %}
+                                    <option value="{{ dia }}" {% if dia == registro['dia'] %}selected{% endif %}>{{ dia }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <label class="form-label" for="inicio_{{ registro['id'] }}">Inicio</label>
+                                <input id="inicio_{{ registro['id'] }}" name="inicio" type="time" class="form-control" value="{{ registro['inicio'] }}" required />
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label" for="fim_{{ registro['id'] }}">Fim</label>
+                                <input id="fim_{{ registro['id'] }}" name="fim" type="time" class="form-control" value="{{ registro['fim'] }}" required />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    {% endfor %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

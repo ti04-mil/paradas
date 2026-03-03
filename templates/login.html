@@ -1,0 +1,141 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - Sistema de Paradas</title>
+    <style>
+        :root {
+            --bg: #e6e7eb;
+            --header: #1f2630;
+            --card: #ffffff;
+            --text: #1b2430;
+            --primary: #1b6eea;
+            --primary-hover: #165bcc;
+            --input-bg: #dce3ee;
+            --alert: #cdeef9;
+            --alert-border: #98d9ee;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: Segoe UI, Tahoma, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        header {
+            background: var(--header);
+            min-height: 110px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        header img {
+            max-width: 100%;
+            height: auto;
+            max-height: 78px;
+            display: block;
+        }
+
+        .wrapper {
+            width: min(100%, 920px);
+            margin: 24px auto;
+            padding: 0 16px;
+        }
+
+        .alert {
+            background: var(--alert);
+            border: 1px solid var(--alert-border);
+            color: #084b67;
+            border-radius: 6px;
+            padding: 14px;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            width: min(100%, 420px);
+            margin: 0 auto;
+            background: transparent;
+            padding: 8px;
+        }
+
+        h1 {
+            margin: 0 0 18px;
+            font-size: 40px;
+            text-align: center;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 26px;
+        }
+
+        input {
+            width: 100%;
+            border: 1px solid #c7d0df;
+            border-radius: 6px;
+            background: var(--input-bg);
+            padding: 14px 12px;
+            font-size: 24px;
+            margin-bottom: 18px;
+        }
+
+        button {
+            width: 100%;
+            border: 0;
+            border-radius: 6px;
+            background: var(--primary);
+            color: #fff;
+            font-size: 28px;
+            padding: 13px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: var(--primary-hover);
+        }
+
+        .hint {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 14px;
+            color: #596274;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Sistemas de Parada dos Teares" />
+    </header>
+
+    <main class="wrapper">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <section class="card">
+            <h1>Login</h1>
+            <form method="post" action="{{ url_for('login') }}">
+                <label for="login">Usuário</label>
+                <input id="login" name="login" type="text" required autocomplete="username" />
+
+                <label for="senha">Senha</label>
+                <input id="senha" name="senha" type="password" required autocomplete="current-password" />
+
+                <button type="submit">Entrar</button>
+            </form>
+            <p class="hint">Acesso inicial: usuário <strong>admin</strong> e senha <strong>123456</strong>.</p>
+        </section>
+    </main>
+</body>
+</html>
