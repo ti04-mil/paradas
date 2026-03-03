@@ -34,9 +34,9 @@ DEFAULT_SETORES = [
     (1, "TI", 6),
     (2, "PROCESSOS", 5),
     (3, "GESTOR", 4),
-    (4, "LIDER 1o TURNO", 1),
-    (5, "LIDER 2o TURNO", 2),
-    (6, "LIDER 3o TURNO", 3),
+    (4, "LIDER 1º TURNO", 1),
+    (5, "LIDER 2º TURNO", 2),
+    (6, "LIDER 3º TURNO", 3),
 ]
 
 DEFAULT_TIPOS_TURNO = [
@@ -1273,6 +1273,11 @@ def init_db() -> None:
             conn.execute("UPDATE turnos SET nome = '1\u00ba TURNO' WHERE nome = '1o TURNO'")
             conn.execute("UPDATE turnos SET nome = '2\u00ba TURNO' WHERE nome = '2o TURNO'")
             conn.execute("UPDATE turnos SET nome = '3\u00ba TURNO' WHERE nome = '3o TURNO'")
+
+        # Corrige nomes legados de setores com ordinal sem símbolo de grau.
+        conn.execute("UPDATE setores SET nome = 'LIDER 1º TURNO' WHERE nome = 'LIDER 1o TURNO'")
+        conn.execute("UPDATE setores SET nome = 'LIDER 2º TURNO' WHERE nome = 'LIDER 2o TURNO'")
+        conn.execute("UPDATE setores SET nome = 'LIDER 3º TURNO' WHERE nome = 'LIDER 3o TURNO'")
 
         conn.execute(
             """

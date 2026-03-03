@@ -45,6 +45,16 @@
             background: transparent;
         }
 
+        .filter-wrap {
+            max-width: 440px;
+            margin-bottom: 14px;
+        }
+
+        .filter-wrap label {
+            font-weight: 600;
+            color: #1f2630;
+        }
+
         .table > :not(caption) > * > * {
             background-color: #e6e7eb;
         }
@@ -59,13 +69,50 @@
             justify-content: flex-end;
         }
 
+        .name-cell {
+            font-weight: 500;
+        }
+
         @media (max-width: 768px) {
+            .title-bar {
+                padding: 14px;
+            }
+
             .title-text {
                 font-size: 1.5rem;
             }
 
+            .title-bar .btn {
+                width: 100%;
+                font-size: 1.1rem;
+                padding: 10px 12px;
+            }
+
+            .title-bar .d-flex {
+                width: 100%;
+            }
+
+            .table {
+                font-size: 1rem;
+            }
+
+            .table th,
+            .table td {
+                white-space: nowrap;
+                padding: 12px 10px;
+            }
+
+            .action-btn {
+                min-width: 90px;
+                padding: 8px 12px;
+            }
+
             .action-group {
                 justify-content: flex-start;
+            }
+
+            .filter-wrap {
+                max-width: 100%;
             }
         }
     </style>
@@ -93,8 +140,12 @@
         </section>
 
         <section class="table-wrap">
+            <div class="filter-wrap">
+                <label for="filtro-nome" class="form-label mb-1">Filtrar por nome</label>
+                <input id="filtro-nome" type="text" class="form-control form-control-lg" placeholder="Digite o nome do setor" autocomplete="off" />
+            </div>
             <div class="table-responsive">
-                <table class="table table-bordered align-middle">
+                <table class="table table-bordered align-middle" id="tabela-setores">
                     <thead>
                         <tr>
                             <th style="width: 80px;">ID</th>
@@ -105,9 +156,9 @@
                     </thead>
                     <tbody>
                         {% for setor in setores %}
-                            <tr>
+                            <tr data-nome="{{ setor['nome']|lower }}">
                                 <td>{{ setor['id'] }}</td>
-                                <td>{{ setor['nome'] }}</td>
+                                <td class="name-cell">{{ setor['nome'] }}</td>
                                 <td>{{ setor['nivel'] }}</td>
                                 <td>
                                     <div class="action-group">
@@ -178,5 +229,18 @@
     {% endfor %}
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const filtroNome = document.getElementById('filtro-nome');
+        const linhasSetores = document.querySelectorAll('#tabela-setores tbody tr');
+
+        filtroNome.addEventListener('input', (event) => {
+            const termo = event.target.value.trim().toLowerCase();
+
+            linhasSetores.forEach((linha) => {
+                const nome = linha.dataset.nome || '';
+                linha.style.display = nome.includes(termo) ? '' : 'none';
+            });
+        });
+    </script>
 </body>
 </html>
