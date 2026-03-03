@@ -32,6 +32,28 @@
             border: 1px solid #c5ccd5;
         }
         .table-responsive table { font-size: 0.95rem; }
+        .mobile-scroll-hint {
+            display: none;
+            margin-top: 8px;
+            font-size: .85rem;
+            color: #5b6472;
+        }
+        .results-table th,
+        .results-table td,
+        .heatmap-table th,
+        .heatmap-table td { white-space: nowrap; }
+        .results-table th:first-child,
+        .results-table td:first-child,
+        .heatmap-table th:first-child,
+        .heatmap-table td:first-child {
+            position: sticky;
+            left: 0;
+            z-index: 2;
+            background: #fff;
+        }
+        .results-table thead th:first-child,
+        .results-table tbody tr.table-light th:first-child,
+        .heatmap-table thead th:first-child { background: #f8f9fa; }
         .heat-cell {
             border-radius: 6px;
             text-align: center;
@@ -62,6 +84,14 @@
             border-color: #0d6efd;
             color: #fff;
             box-shadow: 0 0 0 0.2rem rgba(13,110,253,.15);
+        }
+        @media (max-width: 768px) {
+            .heat-cell {
+                min-width: 92px;
+                padding: 7px;
+                font-size: .95rem;
+            }
+            .mobile-scroll-hint { display: block; }
         }
     </style>
 </head>
@@ -129,7 +159,7 @@
         <section class="panel">
             <h5>Resultados</h5>
             <div class="table-responsive">
-                <table class="table table-bordered table-sm align-middle mb-0">
+                <table class="table table-bordered table-sm align-middle mb-0 results-table">
                     <thead class="table-light">
                         <tr>
                             <th>Tear</th>
@@ -159,12 +189,13 @@
                     </tbody>
                 </table>
             </div>
+            <p class="mobile-scroll-hint mb-0">↔ Arraste horizontalmente para ver todos os dias.</p>
         </section>
 
         <section class="panel">
             <h5>Mapa de calor (Tear x Dia)</h5>
             <div class="table-responsive">
-                <table class="table table-borderless align-middle mb-0">
+                <table class="table table-borderless align-middle mb-0 heatmap-table">
                     <thead>
                         <tr>
                             <th>Tear</th>
@@ -190,6 +221,7 @@
                     </tbody>
                 </table>
             </div>
+            <p class="mobile-scroll-hint mb-0">↔ Arraste horizontalmente para visualizar os 7 dias.</p>
         </section>
     </main>
     <script>
