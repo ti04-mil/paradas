@@ -2470,6 +2470,8 @@ def status_teares():
             funcionando = int(latest["tipo"]) == 1
             motivo = latest["motivo_oficial"] or latest["motivo"] or "SEM REGISTRO"
 
+        tempo_minutos = max(0, int((agora - desde).total_seconds() // 60))
+
         cards.append(
             {
                 "tear_id": tear["id"],
@@ -2477,6 +2479,7 @@ def status_teares():
                 "funcionando": funcionando,
                 "numero_ordem": int("".join(ch for ch in str(tear["numero"]) if ch.isdigit()) or "0"),
                 "tempo": tempo,
+                "tempo_minutos": tempo_minutos,
                 "motivo": motivo,
                 "funcionando_desde": desde.strftime("%d/%m/%Y %H:%M"),
                 "parado_desde": desde.strftime("%d/%m/%Y %H:%M"),

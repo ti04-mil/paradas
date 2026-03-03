@@ -65,6 +65,24 @@
         .sub { font-size: 2rem; margin-bottom: 8px; }
         .muted { font-size: 1.35rem; color: #394a5b; margin-bottom: 8px; }
 
+        .dashboard-tools {
+            background: #fff;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+            border: 1px solid #c5ccd5;
+        }
+
+        .tear-card.critical {
+            border-width: 3px;
+            box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.2);
+        }
+
+        .urgency-badge {
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+        }
+
         .modal-stop .modal-header {
             background: #dc3545;
             color: #fff;
@@ -136,10 +154,41 @@
             <a href="{{ url_for('sistema') }}" class="btn btn-outline-light btn-lg">Voltar</a>
         </section>
 
-        <section class="row g-3 g-md-4">
+        <section class="dashboard-tools">
+            <div class="row g-2 align-items-end">
+                <div class="col-12 col-lg-5">
+                    <label for="buscaTear" class="form-label mb-1">Buscar tear</label>
+                    <input id="buscaTear" type="search" class="form-control" placeholder="Número ou nome do tear" />
+                </div>
+                <div class="col-12 col-sm-6 col-lg-3">
+                    <label for="filtroStatus" class="form-label mb-1">Status</label>
+                    <select id="filtroStatus" class="form-select">
+                        <option value="todos">Todos</option>
+                        <option value="parados">Parados</option>
+                        <option value="funcionando">Funcionando</option>
+                    </select>
+                </div>
+                <div class="col-12 col-sm-6 col-lg-4">
+                    <label for="ordenacao" class="form-label mb-1">Ordenação</label>
+                    <select id="ordenacao" class="form-select">
+                        <option value="padrao">Padrão</option>
+                        <option value="parados_tempo">Tempo parado (maior primeiro)</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <section class="row g-3 g-md-4" id="cardsTeares">
             {% for card in cards %}
-                <div class="col-12 col-md-6 col-lg-4">
-                    <article class="tear-card {% if card['funcionando'] %}tear-running{% else %}tear-stopped{% endif %}">
+                {% set is_critical = (not card['funcionando']) and card['tempo_minutos'] >= 120 %}
+                <div
+                    class="col-12 col-md-6 col-lg-4 tear-item"
+                    data-search="{{ card['titulo'] | lower }} {{ card['numero_ordem'] }}"
+                    data-status="{{ 'funcionando' if card['funcionando'] else 'parados' }}"
+                    data-parado-minutos="{{ card['tempo_minutos'] if not card['funcionando'] else 0 }}"
+                    data-default-index="{{ loop.index0 }}"
+                >
+                    <article class="tear-card {% if card['funcionando'] %}tear-running{% else %}tear-stopped{% endif %} {% if is_critical %}critical{% endif %}">
                         <h2 class="sub">{{ card['titulo'] }}</h2>
                         {% if card['funcionando'] %}
                             <p class="muted">Funcionando há {{ card['tempo'] }} horas</p>
@@ -148,6 +197,9 @@
                                 <button type="button" class="action-btn btn-stop" data-bs-toggle="modal" data-bs-target="#modalParar{{ card['tear_id'] }}">Parar</button>
                             {% endif %}
                         {% else %}
+                            {% if is_critical %}
+                                <span class="badge text-bg-danger urgency-badge">Urgente: parado há mais de 2 horas</span>
+                            {% endif %}
                             <p class="muted">Parado há {{ card['tempo'] }} horas</p>
                             <p class="muted">Motivo atual: {{ card['motivo'] }}</p>
                             {% if can_operar %}
@@ -313,5 +365,51 @@
         }
     </script>
     {% endif %}
+    <script>
+        const buscaTear = document.getElementById('buscaTear');
+        const filtroStatus = document.getElementById('filtroStatus');
+        const ordenacao = document.getElementById('ordenacao');
+        const cardsTeares = document.getElementById('cardsTeares');
+        const itens = Array.from(document.querySelectorAll('.tear-item'));
+
+        function atualizarDashboard() {
+            const termo = (buscaTear?.value || '').trim().toLowerCase();
+            const status = filtroStatus?.value || 'todos';
+            const ordem = ordenacao?.value || 'padrao';
+
+            itens.forEach((item) => {
+                const texto = item.dataset.search || '';
+                const statusItem = item.dataset.status || 'todos';
+
+                const passaBusca = !termo || texto.includes(termo);
+                const passaStatus = status === 'todos' || statusItem === status;
+
+                item.classList.toggle('d-none', !(passaBusca && passaStatus));
+            });
+
+            const visiveis = itens.filter((item) => !item.classList.contains('d-none'));
+            visiveis.sort((a, b) => {
+                if (ordem === 'parados_tempo') {
+                    const diffTempo = Number(b.dataset.paradoMinutos || 0) - Number(a.dataset.paradoMinutos || 0);
+                    if (diffTempo !== 0) {
+                        return diffTempo;
+                    }
+                }
+
+                return Number(a.dataset.defaultIndex || 0) - Number(b.dataset.defaultIndex || 0);
+            });
+
+            visiveis.forEach((item) => cardsTeares.appendChild(item));
+        }
+
+        [buscaTear, filtroStatus, ordenacao].forEach((controle) => {
+            if (controle) {
+                controle.addEventListener('input', atualizarDashboard);
+                controle.addEventListener('change', atualizarDashboard);
+            }
+        });
+
+        atualizarDashboard();
+    </script>
 </body>
 </html>
