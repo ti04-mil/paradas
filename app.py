@@ -1,4 +1,4 @@
-﻿from flask import Flask, flash, redirect, render_template, request, session, url_for
+﻿from flask import Flask, flash, jsonify, redirect, render_template, request, session, url_for
 from datetime import datetime, timedelta
 import os
 import sqlite3
@@ -2879,6 +2879,38 @@ def descanso_ativar():
     flash(f"{total_ativados} tear(es) ativado(s) do descanso semanal.")
     return redirect(url_for("descanso_semanal"))
 
+
+
+
+@app.get("/listaparadas")
+def listaparadas():
+    user = get_current_user()
+    if user is None:
+        return jsonify({"erro": "Nao autenticado."}), 401
+    if not is_level_6(user):
+        return jsonify({"erro": "Acesso negado para este usuario."}), 403
+
+    with get_connection() as conn:
+        rows = conn.execute(
+            """
+            SELECT
+                data_emi,
+                funcionario,
+                operacao,
+                numero,
+                qtde,
+                pcini,
+                hora_ini,
+                hora_fim,
+                pcfim,
+                partida,
+                observacao
+            FROM producao1_001
+            ORDER BY data_emi DESC, hora_ini DESC
+            """
+        ).fetchall()
+
+    return jsonify([dict(row) for row in rows])
 
 @app.get("/logout")
 def logout():
