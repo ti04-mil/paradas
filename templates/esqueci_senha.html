@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Esqueci minha senha - Sistema de Paradas</title>
+    <style>
+        :root {
+            --bg: #e6e7eb;
+            --header: #1f2630;
+            --text: #1b2430;
+            --primary: #1b6eea;
+            --primary-hover: #165bcc;
+            --input-bg: #dce3ee;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: Segoe UI, Tahoma, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        header {
+            background: var(--header);
+            min-height: 110px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        header img {
+            max-width: 100%;
+            height: auto;
+            max-height: 78px;
+            display: block;
+        }
+
+        .wrapper {
+            width: min(100%, 920px);
+            margin: 24px auto;
+            padding: 0 16px;
+        }
+
+        .card {
+            width: min(100%, 520px);
+            margin: 0 auto;
+            padding: 8px;
+        }
+
+        h1 {
+            margin: 0 0 18px;
+            font-size: 36px;
+            text-align: center;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 24px;
+        }
+
+        input {
+            width: 100%;
+            border: 1px solid #c7d0df;
+            border-radius: 6px;
+            background: var(--input-bg);
+            padding: 14px 12px;
+            font-size: 22px;
+            margin-bottom: 18px;
+        }
+
+        .input-error {
+            border-color: #d9534f;
+            background: #f8e7e7;
+        }
+
+        .field-error {
+            color: #a94442;
+            font-size: 16px;
+            margin-top: -10px;
+            margin-bottom: 12px;
+        }
+
+        .btn {
+            width: 100%;
+            border: 0;
+            border-radius: 6px;
+            background: var(--primary);
+            color: #fff;
+            font-size: 24px;
+            padding: 13px;
+            cursor: pointer;
+        }
+
+        .btn:hover { background: var(--primary-hover); }
+
+        .actions {
+            margin-top: 16px;
+            text-align: center;
+        }
+
+        .actions a {
+            color: #0d6efd;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .actions a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Sistemas de Parada dos Teares" />
+    </header>
+
+    <main class="wrapper">
+        <section class="card">
+            <h1>Esqueci minha senha</h1>
+            <form method="post" action="{{ url_for('esqueci_senha') }}">
+                <label for="login">Usuário</label>
+                <input id="login" name="login" type="text" value="{{ form_values['login'] if form_values else '' }}" class="{% if form_errors and form_errors.get('login') %}input-error{% endif %}" required autocomplete="username" />
+                {% if form_errors and form_errors.get('login') %}<p class="field-error">{{ form_errors['login'] }}</p>{% endif %}
+
+                <label for="email">E-mail cadastrado</label>
+                <input id="email" name="email" type="email" value="{{ form_values['email'] if form_values else '' }}" class="{% if form_errors and form_errors.get('email') %}input-error{% endif %}" required autocomplete="email" />
+                {% if form_errors and form_errors.get('email') %}<p class="field-error">{{ form_errors['email'] }}</p>{% endif %}
+
+                <label for="nova_senha">Nova senha</label>
+                <input id="nova_senha" name="nova_senha" type="password" class="{% if form_errors and form_errors.get('nova_senha') %}input-error{% endif %}" required autocomplete="new-password" />
+                {% if form_errors and form_errors.get('nova_senha') %}<p class="field-error">{{ form_errors['nova_senha'] }}</p>{% endif %}
+
+                <label for="confirmar_senha">Confirmar nova senha</label>
+                <input id="confirmar_senha" name="confirmar_senha" type="password" class="{% if form_errors and form_errors.get('confirmar_senha') %}input-error{% endif %}" required autocomplete="new-password" />
+                {% if form_errors and form_errors.get('confirmar_senha') %}<p class="field-error">{{ form_errors['confirmar_senha'] }}</p>{% endif %}
+
+                <button type="submit" class="btn">Redefinir senha</button>
+            </form>
+
+            <div class="actions">
+                <a href="{{ url_for('login') }}">Voltar para o login</a>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

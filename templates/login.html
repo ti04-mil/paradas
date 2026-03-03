@@ -86,6 +86,42 @@
             margin-bottom: 18px;
         }
 
+        .input-error {
+            border-color: #d9534f;
+            background: #f8e7e7;
+        }
+
+        .field-error {
+            color: #a94442;
+            font-size: 16px;
+            margin-top: -10px;
+            margin-bottom: 12px;
+        }
+
+        .password-field {
+            position: relative;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 0;
+            background: transparent;
+            color: #314154;
+            font-size: 14px;
+            font-weight: 600;
+            width: auto;
+            padding: 8px;
+            cursor: pointer;
+        }
+
+        .toggle-password:hover {
+            background: transparent;
+            color: #1b2430;
+        }
+
         button {
             width: 100%;
             border: 0;
@@ -107,6 +143,22 @@
             font-size: 14px;
             color: #596274;
         }
+
+        .hint-actions {
+            margin-top: 14px;
+            text-align: center;
+        }
+
+        .hint-actions a {
+            color: #0d6efd;
+            font-size: 16px;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .hint-actions a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -127,15 +179,57 @@
             <h1>Login</h1>
             <form method="post" action="{{ url_for('login') }}">
                 <label for="login">Usuário</label>
-                <input id="login" name="login" type="text" required autocomplete="username" />
+                <input
+                    id="login"
+                    name="login"
+                    type="text"
+                    value="{{ form_values['login'] if form_values else '' }}"
+                    class="{% if form_errors and form_errors.get('login') %}input-error{% endif %}"
+                    required
+                    autocomplete="username"
+                    autofocus
+                />
+                {% if form_errors and form_errors.get('login') %}
+                    <p class="field-error">{{ form_errors['login'] }}</p>
+                {% endif %}
 
                 <label for="senha">Senha</label>
-                <input id="senha" name="senha" type="password" required autocomplete="current-password" />
+                <div class="password-field">
+                    <input
+                        id="senha"
+                        name="senha"
+                        type="password"
+                        class="{% if form_errors and form_errors.get('senha') %}input-error{% endif %}"
+                        required
+                        autocomplete="current-password"
+                    />
+                    <button type="button" class="toggle-password" id="togglePassword" aria-label="Mostrar senha">Mostrar</button>
+                </div>
+                {% if form_errors and form_errors.get('senha') %}
+                    <p class="field-error">{{ form_errors['senha'] }}</p>
+                {% endif %}
 
                 <button type="submit">Entrar</button>
             </form>
-            <p class="hint">Acesso inicial: usuário <strong>admin</strong> e senha <strong>123456</strong>.</p>
+            <div class="hint-actions">
+                <a href="{{ url_for('esqueci_senha') }}">Esqueci minha senha</a>
+            </div>
+            {% if show_default_login_hint %}
+                <p class="hint">Acesso inicial: usuário <strong>admin</strong> e senha <strong>123456</strong>.</p>
+            {% endif %}
         </section>
     </main>
+
+    <script>
+        const senhaInput = document.getElementById("senha");
+        const togglePassword = document.getElementById("togglePassword");
+
+        togglePassword?.addEventListener("click", () => {
+            const isPasswordType = senhaInput.type === "password";
+            senhaInput.type = isPasswordType ? "text" : "password";
+            togglePassword.textContent = isPasswordType ? "Ocultar" : "Mostrar";
+            togglePassword.setAttribute("aria-label", isPasswordType ? "Ocultar senha" : "Mostrar senha");
+        });
+    </script>
 </body>
 </html>
