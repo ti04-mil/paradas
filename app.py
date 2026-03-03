@@ -185,7 +185,51 @@ def canonical_turno_nome(value: str) -> str:
 def interval_matches_turno(interval_turno: str, turno_filtro: str) -> bool:
     if turno_filtro == "TODOS":
         return True
-    return canonical_turno_nome(interval_turno) == turno_filtro
+    return (
+        canonical_turno_nome(interval_turno) == turno_filtro
+        or normalize_turno_nome(interval_turno) == normalize_turno_nome(turno_filtro)
+    )
+
+
+TURNO_JANELAS_MINUTOS = {
+    "1º TURNO": [(5 * 60, 13 * 60 + 30)],
+    "2º TURNO": [(13 * 60 + 30, 22 * 60)],
+    "3º TURNO": [(0, 5 * 60), (22 * 60, 24 * 60)],
+    "2º TURNO RODIZIO SABADO": [(13 * 60, 22 * 60)],
+    "3º TURNO RODIZIO SABADO-DOMINGO": [(0, 5 * 60), (22 * 60, 24 * 60)],
+    "1º TURNO RODIZIO DOMINGO": [(5 * 60, 13 * 60 + 30)],
+    "2º TURNO RODIZIO DOMINGO": [(13 * 60 + 30, 22 * 60)],
+}
+
+
+def minutos_no_turno(
+    intervalo_inicio: datetime,
+    intervalo_fim: datetime,
+    dia_inicio: datetime,
+    turno_filtro: str,
+    intervalo_turno: str,
+) -> int:
+    if intervalo_fim <= intervalo_inicio:
+        return 0
+
+    if turno_filtro == "TODOS":
+        return int((intervalo_fim - intervalo_inicio).total_seconds() // 60)
+
+    janelas = TURNO_JANELAS_MINUTOS.get(turno_filtro)
+    if not janelas:
+        if not interval_matches_turno(intervalo_turno, turno_filtro):
+            return 0
+        return int((intervalo_fim - intervalo_inicio).total_seconds() // 60)
+
+    total = 0
+    for janela_inicio_min, janela_fim_min in janelas:
+        janela_inicio = dia_inicio + timedelta(minutes=janela_inicio_min)
+        janela_fim = dia_inicio + timedelta(minutes=janela_fim_min)
+        inicio = max(intervalo_inicio, janela_inicio)
+        fim = min(intervalo_fim, janela_fim)
+        if fim > inicio:
+            total += int((fim - inicio).total_seconds() // 60)
+    return total
 
 def get_connection() -> sqlite3.Connection:
     conn = sqlite3.connect(DB_PATH)
@@ -2905,15 +2949,27 @@ def relatorio_geral():
 
             while idx < len(eventos) and eventos[idx]["dt"] < day_end:
                 ev = eventos[idx]
-                if ev["dt"] > cursor and estado_atual == estado_tipo and interval_matches_turno(turno_atual, turno_filtro):
-                    minutos_estado += int((ev["dt"] - cursor).total_seconds() // 60)
+                if ev["dt"] > cursor and estado_atual == estado_tipo:
+                    minutos_estado += minutos_no_turno(
+                        cursor,
+                        ev["dt"],
+                        day_start,
+                        turno_filtro,
+                        turno_atual,
+                    )
                 cursor = max(cursor, ev["dt"])
                 estado_atual = ev["tipo"]
                 turno_atual = ev["turno"]
                 idx += 1
 
-            if day_end > cursor and estado_atual == estado_tipo and interval_matches_turno(turno_atual, turno_filtro):
-                minutos_estado += int((day_end - cursor).total_seconds() // 60)
+            if day_end > cursor and estado_atual == estado_tipo:
+                minutos_estado += minutos_no_turno(
+                    cursor,
+                    day_end,
+                    day_start,
+                    turno_filtro,
+                    turno_atual,
+                )
 
             minutos_por_dia.append(max(minutos_estado, 0))
 
