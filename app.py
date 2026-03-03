@@ -1362,39 +1362,35 @@ def init_db() -> None:
                     (nome_tear, descricao_tear, numero_tear),
                 )
 
+        total_usuarios = conn.execute("SELECT COUNT(*) AS total FROM usuarios").fetchone()["total"]
         admin = conn.execute("SELECT id FROM usuarios WHERE login = ?", ("admin",)).fetchone()
-        if admin is None:
+        if int(total_usuarios) == 0 and admin is None:
             conn.execute(
                 "INSERT INTO usuarios (login, senha, email, nivel) VALUES (?, ?, ?, ?)",
                 ("admin", generate_password_hash("123456"), "ti1@malhariaindaial.com.br", 6),
             )
+            admin = conn.execute("SELECT id FROM usuarios WHERE login = ?", ("admin",)).fetchone()
 
-        admin_id = conn.execute("SELECT id FROM usuarios WHERE login = ?", ("admin",)).fetchone()["id"]
-        ti = conn.execute("SELECT id, nivel FROM setores WHERE nome = ?", ("TI",)).fetchone()
-
-        if ti:
-            conn.execute(
-                "UPDATE usuarios SET senha = ?, email = ?, nivel = ?, setor_id = ? WHERE login = ?",
-                (
-                    generate_password_hash("123456"),
-                    "ti1@malhariaindaial.com.br",
-                    int(ti["nivel"]),
-                    int(ti["id"]),
-                    "admin",
-                ),
-            )
-
-        turnos_admin = conn.execute(
-            "SELECT COUNT(*) AS total FROM usuario_tipos_turno WHERE usuario_id = ?",
-            (admin_id,),
-        ).fetchone()["total"]
-        if int(turnos_admin) == 0:
-            todos = conn.execute("SELECT id FROM turnos WHERE nome = ?", ("TODOS",)).fetchone()
-            if todos:
+        if admin is not None:
+            admin_id = int(admin["id"])
+            ti = conn.execute("SELECT id FROM setores WHERE nome = ?", ("TI",)).fetchone()
+            if ti:
                 conn.execute(
-                    "INSERT OR IGNORE INTO usuario_tipos_turno (usuario_id, turno_id) VALUES (?, ?)",
-                    (admin_id, int(todos["id"])),
+                    "UPDATE usuarios SET setor_id = ?, nivel = ? WHERE id = ?",
+                    (int(ti["id"]), 6, admin_id),
                 )
+
+            turnos_admin = conn.execute(
+                "SELECT COUNT(*) AS total FROM usuario_tipos_turno WHERE usuario_id = ?",
+                (admin_id,),
+            ).fetchone()["total"]
+            if int(turnos_admin) == 0:
+                todos = conn.execute("SELECT id FROM turnos WHERE nome = ?", ("TODOS",)).fetchone()
+                if todos:
+                    conn.execute(
+                        "INSERT OR IGNORE INTO usuario_tipos_turno (usuario_id, turno_id) VALUES (?, ?)",
+                        (admin_id, int(todos["id"])),
+                    )
 
         conn.commit()
 
@@ -2924,4 +2920,3 @@ if __name__ == "__main__":
     if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
         start_auto_sync_scheduler()
     app.run(host="127.0.0.1", port=int(os.getenv("PORT", "5000")), debug=True)
-
