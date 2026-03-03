@@ -2787,11 +2787,20 @@ def relatorio_geral():
 
     hoje = datetime.now().date()
     data_fim_iso = request.args.get("data_fim", "").strip()
+    data_inicio_iso = request.args.get("data_inicio", "").strip()
     try:
         data_fim = datetime.strptime(data_fim_iso, "%Y-%m-%d").date() if data_fim_iso else hoje
     except ValueError:
         data_fim = hoje
-    data_inicio = data_fim - timedelta(days=6)
+
+    data_inicio_padrao = data_fim - timedelta(days=6)
+    try:
+        data_inicio = datetime.strptime(data_inicio_iso, "%Y-%m-%d").date() if data_inicio_iso else data_inicio_padrao
+    except ValueError:
+        data_inicio = data_inicio_padrao
+
+    if data_inicio > data_fim:
+        data_inicio = data_fim
 
     estado = request.args.get("estado", "funcionando").strip().lower()
     if estado not in {"funcionando", "parado"}:
@@ -2864,7 +2873,9 @@ def relatorio_geral():
             if teve_parada_no_dia(eventos_por_tear.get(tear["id"], []), data_fim)
         }
 
-    dias = [data_inicio + timedelta(days=offset) for offset in range(7)]
+    total_dias = (data_fim - data_inicio).days + 1
+    total_dias = min(max(total_dias, 1), 31)
+    dias = [data_inicio + timedelta(days=offset) for offset in range(total_dias)]
     day_labels = [day.strftime("%d/%m") for day in dias]
     estado_tipo = 1 if estado == "funcionando" else 0
 
@@ -2924,7 +2935,7 @@ def relatorio_geral():
     def fmt(mins: int) -> str:
         h = mins // 60
         m = mins % 60
-        return f"{h:02d}h {m:02d}"
+        return f"{h:02d}:{m:02d}"
 
     heatmap_rows = []
     for row in resultados:

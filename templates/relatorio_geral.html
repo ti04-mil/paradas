@@ -39,7 +39,30 @@
             font-weight: 700;
             min-width: 110px;
         }
-        .teares-scroll { max-height: 140px; overflow-y: auto; border: 1px solid #d0d5dd; border-radius: 6px; padding: 8px; }
+        .teares-scroll { max-height: 240px; overflow-y: auto; border: 1px solid #d0d5dd; border-radius: 8px; padding: 10px; }
+        .tear-toggle-input { position: absolute; opacity: 0; pointer-events: none; }
+        .tear-toggle-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 12px 10px;
+            border-radius: 10px;
+            border: 2px solid #b8c2d0;
+            background: #edf1f5;
+            color: #1f2937;
+            font-weight: 700;
+            cursor: pointer;
+            user-select: none;
+            transition: all .15s ease-in-out;
+        }
+        .tear-toggle-label:hover { border-color: #6c7f95; }
+        .tear-toggle-input:checked + .tear-toggle-label {
+            background: #0d6efd;
+            border-color: #0d6efd;
+            color: #fff;
+            box-shadow: 0 0 0 0.2rem rgba(13,110,253,.15);
+        }
     </style>
 </head>
 <body>
@@ -56,8 +79,8 @@
         <section class="panel">
             <form method="get" class="row g-3 align-items-end">
                 <div class="col-12 col-md-3">
-                    <label class="form-label">Data início (fixo 7 dias)</label>
-                    <input type="date" class="form-control" value="{{ data_inicio }}" readonly />
+                    <label class="form-label">Data início</label>
+                    <input id="dataInicio" name="data_inicio" type="date" class="form-control" value="{{ data_inicio }}" required />
                 </div>
                 <div class="col-12 col-md-3">
                     <label class="form-label" for="dataFim">Data fim</label>
@@ -89,10 +112,8 @@
                         <div class="row g-2">
                             {% for tear in teares %}
                                 <div class="col-6 col-md-3 col-lg-2">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="tear_ids" value="{{ tear['id'] }}" id="tear{{ tear['id'] }}" {% if tear['id'] in teares_ids_filtro %}checked{% endif %}>
-                                        <label class="form-check-label" for="tear{{ tear['id'] }}">{{ tear['label'] }}</label>
-                                    </div>
+                                    <input class="tear-toggle-input" type="checkbox" name="tear_ids" value="{{ tear['id'] }}" id="tear{{ tear['id'] }}" {% if tear['id'] in teares_ids_filtro %}checked{% endif %}>
+                                    <label class="tear-toggle-label" for="tear{{ tear['id'] }}">{{ tear['label'] }}</label>
                                 </div>
                             {% endfor %}
                         </div>
@@ -171,5 +192,21 @@
             </div>
         </section>
     </main>
+    <script>
+        document.querySelectorAll('input[type="date"]').forEach((input) => {
+            input.addEventListener('keydown', (event) => event.preventDefault());
+            input.addEventListener('focus', () => {
+                if (typeof input.showPicker === 'function') {
+                    input.showPicker();
+                }
+            });
+        });
+
+        document.querySelectorAll('input[name="estado"]').forEach((radio) => {
+            radio.addEventListener('change', () => {
+                radio.form?.requestSubmit();
+            });
+        });
+    </script>
 </body>
 </html>
