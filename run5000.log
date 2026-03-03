@@ -1,0 +1,50 @@
+ * Serving Flask app 'app'
+ * Debug mode: on
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on http://127.0.0.1:5000
+Press CTRL+C to quit
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 149-429-741
+127.0.0.1 - - [03/Mar/2026 09:24:27] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 09:24:30] "GET /status-teares HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 09:24:31] "GET /Imagens/logo.png HTTP/1.1" 304 -
+127.0.0.1 - - [03/Mar/2026 09:24:33] "GET /sistema HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 09:24:34] "GET /Imagens/logo.png HTTP/1.1" 304 -
+127.0.0.1 - - [03/Mar/2026 09:24:35] "GET /enviar HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 09:24:35] "GET /Imagens/logo.png HTTP/1.1" 304 -
+127.0.0.1 - - [03/Mar/2026 09:24:36] "GET /enviar?data=2026-03-03 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 09:24:36] "GET /Imagens/logo.png HTTP/1.1" 304 -
+127.0.0.1 - - [03/Mar/2026 09:25:30] "GET /enviar?data=2026-03-03 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 09:25:30] "GET /Imagens/logo.png HTTP/1.1" 304 -
+127.0.0.1 - - [03/Mar/2026 09:25:31] "GET /enviar?data=2026-03-03 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 09:25:31] "GET /Imagens/logo.png HTTP/1.1" 304 -
+127.0.0.1 - - [03/Mar/2026 09:25:32] "POST /enviar/manual HTTP/1.1" 302 -
+127.0.0.1 - - [03/Mar/2026 09:25:32] "GET /enviar?data=2026-03-03 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 09:25:32] "GET /Imagens/logo.png HTTP/1.1" 304 -
+127.0.0.1 - - [03/Mar/2026 09:25:34] "GET /enviar?data=2026-03-03 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 09:25:34] "GET /Imagens/logo.png HTTP/1.1" 304 -
+127.0.0.1 - - [03/Mar/2026 09:25:37] "GET /enviar?data=2026-03-02 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 09:25:37] "GET /Imagens/logo.png HTTP/1.1" 304 -
+127.0.0.1 - - [03/Mar/2026 09:25:38] "GET /enviar?data=2026-03-02 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 09:25:38] "GET /Imagens/logo.png HTTP/1.1" 304 -
+127.0.0.1 - - [03/Mar/2026 09:25:39] "GET /enviar?data=2026-03-02 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 09:25:39] "GET /Imagens/logo.png HTTP/1.1" 304 -
+127.0.0.1 - - [03/Mar/2026 09:25:40] "POST /enviar/manual HTTP/1.1" 302 -
+127.0.0.1 - - [03/Mar/2026 09:25:40] "GET /enviar?data=2026-03-02 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 09:25:40] "GET /Imagens/logo.png HTTP/1.1" 304 -
+127.0.0.1 - - [03/Mar/2026 09:25:41] "GET /enviar?data=2026-03-02 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 09:25:41] "GET /Imagens/logo.png HTTP/1.1" 304 -
+127.0.0.1 - - [03/Mar/2026 09:25:43] "GET /enviar?data=2026-03-01 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 09:25:43] "GET /Imagens/logo.png HTTP/1.1" 304 -
+127.0.0.1 - - [03/Mar/2026 09:25:44] "POST /enviar/manual HTTP/1.1" 302 -
+127.0.0.1 - - [03/Mar/2026 09:25:44] "GET /enviar?data=2026-03-01 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 09:25:44] "GET /Imagens/logo.png HTTP/1.1" 304 -
+127.0.0.1 - - [03/Mar/2026 09:25:45] "GET /enviar?data=2026-03-01 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 09:25:45] "GET /Imagens/logo.png HTTP/1.1" 304 -
+127.0.0.1 - - [03/Mar/2026 09:25:48] "GET /enviar?data=2026-03-03 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 09:25:48] "GET /Imagens/logo.png HTTP/1.1" 304 -
+127.0.0.1 - - [03/Mar/2026 09:25:49] "GET /enviar?data=2026-03-03 HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 09:25:49] "GET /Imagens/logo.png HTTP/1.1" 304 -
+127.0.0.1 - - [03/Mar/2026 09:25:50] "GET /sistema HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 09:25:50] "GET /Imagens/logo.png HTTP/1.1" 304 -
